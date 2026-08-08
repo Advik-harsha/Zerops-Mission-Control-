@@ -11,14 +11,18 @@ import StarfieldCanvas from './StarfieldCanvas.jsx'
 import MissionClock from './MissionClock.jsx'
 
 export default function ControlRoom({
-  services,
-  pipelineEvents,
-  logEntries,
-  projectName,
-  connectionStatus,
-  lastUpdated,
+  services = [],
+  pipelineEvents = [],
+  logEntries = [],
+  projectName = 'mission-control',
+  connectionStatus = 'connecting',
+  lastUpdated = null,
 }) {
   const [scanLine, setScanLine] = useState(false)
+
+  const safeServices = Array.isArray(services) ? services : []
+  const safePipeline = Array.isArray(pipelineEvents) ? pipelineEvents : []
+  const safeLogs = Array.isArray(logEntries) ? logEntries : []
 
   // Periodic header scan-line flash
   useEffect(() => {
@@ -37,16 +41,16 @@ export default function ControlRoom({
     connectionStatus === 'live' ? 'TELEMETRY LIVE' :
     connectionStatus === 'reconnecting' ? 'RECONNECTING' : 'SIGNAL LOST'
 
-  const totalNominal = services.filter(s => s.status === 'ACTIVE').length
+  const totalNominal = safeServices.filter(s => s && s.status === 'ACTIVE').length
   const systemStatus =
-    services.length === 0 ? 'AWAITING TELEMETRY' :
-    totalNominal === services.length ? 'ALL SYSTEMS NOMINAL' :
+    safeServices.length === 0 ? 'AWAITING TELEMETRY' :
+    totalNominal === safeServices.length ? 'ALL SYSTEMS NOMINAL' :
     totalNominal === 0 ? 'CRITICAL — ALL OFFLINE' :
-    `${totalNominal}/${services.length} NOMINAL`
+    `${totalNominal}/${safeServices.length} NOMINAL`
 
   const systemColor =
-    services.length === 0 ? 'var(--amber)' :
-    totalNominal === services.length ? 'var(--green)' :
+    safeServices.length === 0 ? 'var(--amber)' :
+    totalNominal === safeServices.length ? 'var(--green)' :
     totalNominal === 0 ? 'var(--red)' : 'var(--amber)'
 
   return (
@@ -294,10 +298,10 @@ export default function ControlRoom({
                 fontSize: 9,
                 color: 'var(--cyan)',
                 opacity: 0.6,
-              }}>{services.length} MODULES</span>
+              }}>{safeServices.length} MODULES</span>
             </div>
 
-            {services.length === 0 ? (
+            {safeServices.length === 0 ? (
               <div style={{
                 flex: 1,
                 display: 'flex',
@@ -323,8 +327,8 @@ export default function ControlRoom({
                 }}>SCANNING…</span>
               </div>
             ) : (
-              services.map(svc => (
-                <ServiceModule key={svc.id} service={svc} />
+              safeServices.map(svc => (
+                <ServiceModule key={svc.id || svc.name} service={svc} />
               ))
             )}
           </div>
@@ -342,7 +346,7 @@ export default function ControlRoom({
           backdropFilter: 'blur(20px)',
           boxShadow: 'inset 0 0 30px rgba(0,0,0,0.3)',
         }}>
-          <LaunchSequence pipelineEvents={pipelineEvents} />
+          <LaunchSequence pipelineEvents={safePipeline} />
         </div>
 
         {/* ── Right panel: mission log ───────────────────── */}
@@ -359,7 +363,7 @@ export default function ControlRoom({
           flexDirection: 'column',
           boxShadow: '-4px 0 30px rgba(0,0,0,0.4)',
         }}>
-          <MissionLog entries={logEntries} />
+          <MissionLog entries={safeLogs} />
         </aside>
 
         {/* CRT overlay */}
