@@ -250,52 +250,54 @@ async def poll_once(
         for raw_svc in raw_services:
             svc_id = str(raw_svc.get("id", ""))
             svc_name = str(raw_svc.get("name", ""))
-            if not svc_id:
+            if not svc_id or svc_id.startswith("svc-"):
                 continue
 
-            versions = await client.get_app_versions(svc_id, limit=3)
-            for ver in versions:
-                ver_id = str(ver.get("id", ""))
-                if not ver_id or ver_id in _seen_version_ids:
-                    continue
+            try:
+                versions = await client.get_app_versions(svc_id, limit=3)
+                for ver in versions:
+                    ver_id = str(ver.get("id", ""))
+                    if not ver_id or ver_id in _seen_version_ids:
+                        continue
 
-                phase, phase_status = _detect_pipeline_phase(ver)
-                started_at = _parse_dt(ver.get("created") or ver.get("startedAt"))
-                finished_at = _parse_dt(ver.get("lastUpdate") or ver.get("finishedAt"))
-                message_text = ver.get("description") or ver.get("message")
+                    phase, phase_status = _detect_pipeline_phase(ver)
+                    started_at = _parse_dt(ver.get("created") or ver.get("startedAt"))
+                    finished_at = _parse_dt(ver.get("lastUpdate") or ver.get("finishedAt"))
+                    message_text = ver.get("description") or ver.get("message")
 
-                # Only record genuinely new events
-                _seen_version_ids.add(ver_id)
-                state_changed = True
+                    _seen_version_ids.add(ver_id)
+                    state_changed = True
 
-                await _persist_pipeline_event(
-                    session, svc_id, svc_name, ver_id,
-                    phase, phase_status, message_text, started_at, finished_at,
-                )
+                    await _persist_pipeline_event(
+                        session, svc_id, svc_name, ver_id,
+                        phase, phase_status, message_text, started_at, finished_at,
+                    )
 
-                severity = _phase_status_to_severity(phase_status)
-                log_msg = f"{svc_name}: pipeline {phase} → {phase_status}"
-                entry = await _persist_log_entry(
-                    session, "DEPLOY", svc_name, log_msg, severity
-                )
-                new_log_entries.append(LogEntryMsg(
-                    id=entry.id,
-                    event_type="DEPLOY",
-                    service_name=svc_name,
-                    message=log_msg,
-                    severity=severity,
-                    occurred_at=entry.occurred_at or datetime.now(timezone.utc),
-                ))
-                new_pipeline_events.append(PipelineEventMsg(
-                    service_id=svc_id,
-                    service_name=svc_name,
-                    version_id=ver_id,
-                    phase=phase,
-                    phase_status=phase_status,
-                    message=message_text,
-                    event_started_at=started_at,
-                    event_finished_at=finished_at,
-                ))
+                    severity = _phase_status_to_severity(phase_status)
+                    log_msg = f"{svc_name}: pipeline {phase} → {phase_status}"
+                    entry = await _persist_log_entry(
+                        session, "DEPLOY", svc_name, log_msg, severity
+                    )
+                    new_log_entries.append(LogEntryMsg(
+                        id=entry.id,
+                        event_type="DEPLOY",
+                        service_name=svc_name,
+                        message=log_msg,
+                        severity=severity,
+                        occurred_at=entry.occurred_at or datetime.now(timezone.utc),
+                    ))
+                    new_pipeline_events.append(PipelineEventMsg(
+                        service_id=svc_id,
+                        service_name=svc_name,
+                        version_id=ver_id,
+                        phase=phase,
+                        phase_status=phase_status,
+                        message=message_text,
+                        event_started_at=started_at,
+                        event_finished_at=finished_at,
+                    ))
+            except Exception as ver_err:
+                logger.warning("Error fetching app versions for %s: %s", svc_name, ver_err)
 
         await session.commit()
 
