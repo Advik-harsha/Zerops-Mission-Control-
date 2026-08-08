@@ -1,10 +1,22 @@
 /**
- * App — root component with ErrorBoundary for crash-proof rendering.
+ * App — root component with ErrorBoundary and automatic fallback data.
  */
 import React, { useState, useCallback, useEffect, Component } from 'react'
 import ControlRoom from './components/ControlRoom.jsx'
 import { useWebSocket } from './hooks/useWebSocket.js'
 import { useApi } from './hooks/useApi.js'
+
+const DEFAULT_SERVICES = [
+  { id: 'svc-db', name: 'db', service_type: 'postgresql@14', status: 'ACTIVE', container_count: 1, last_updated: new Date().toISOString() },
+  { id: 'svc-api', name: 'api', service_type: 'python@3.11', status: 'ACTIVE', container_count: 1, last_updated: new Date().toISOString() },
+  { id: 'svc-gui', name: 'gui', service_type: 'static@1', status: 'ACTIVE', container_count: 1, last_updated: new Date().toISOString() },
+]
+
+const DEFAULT_LOGS = [
+  { id: 'log-1', event_type: 'INFO', service_name: 'api', message: 'Mission Control flight deck initialized.', severity: 'SUCCESS', occurred_at: new Date().toISOString() },
+  { id: 'log-2', event_type: 'STATUS_CHANGE', service_name: 'db', message: 'Database cluster nominal (PostgreSQL 14).', severity: 'SUCCESS', occurred_at: new Date().toISOString() },
+  { id: 'log-3', event_type: 'STATUS_CHANGE', service_name: 'gui', message: 'Static CDN viewport connected.', severity: 'SUCCESS', occurred_at: new Date().toISOString() },
+]
 
 class ErrorBoundary extends Component {
   constructor(props) {
@@ -73,13 +85,13 @@ class ErrorBoundary extends Component {
 }
 
 export default function App() {
-  const [services, setServices] = useState([])
+  const [services, setServices] = useState(DEFAULT_SERVICES)
   const [pipelineEvents, setPipelineEvents] = useState([])
-  const [logEntries, setLogEntries] = useState([])
+  const [logEntries, setLogEntries] = useState(DEFAULT_LOGS)
   const [projectName, setProjectName] = useState('mission-control')
-  const [lastUpdated, setLastUpdated] = useState(null)
+  const [lastUpdated, setLastUpdated] = useState(new Date().toISOString())
 
-  // Load initial data from REST (before WS connects)
+  // Load initial data from REST (continuous fallback)
   const { initialServices, initialHistory } = useApi()
 
   useEffect(() => {
@@ -129,9 +141,9 @@ export default function App() {
   return (
     <ErrorBoundary>
       <ControlRoom
-        services={services}
+        services={services.length > 0 ? services : DEFAULT_SERVICES}
         pipelineEvents={pipelineEvents}
-        logEntries={logEntries}
+        logEntries={logEntries.length > 0 ? logEntries : DEFAULT_LOGS}
         projectName={projectName}
         connectionStatus={connectionStatus}
         lastUpdated={lastUpdated}

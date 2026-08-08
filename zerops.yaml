@@ -15,16 +15,12 @@ zerops:
         - port: 8000
           httpSupport: true
       prepareCommands:
-        - python3 -m pip install --break-system-packages --ignore-installed -r $(find /home/zerops -name requirements.txt | head -n 1)
-      start: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
+        - python3 -m pip install --break-system-packages -r $(find /home/zerops -name requirements.txt | head -n 1)
+      start: python3 -m uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
       readinessCheck:
         httpGet:
           port: 8000
           path: /health
-          scheme: http
-        initialDelaySeconds: 5
-        periodSeconds: 10
-        failureThreshold: 6
 
   # ────────────────────────────────────────────────────
   # GUI — React + Vite static site
