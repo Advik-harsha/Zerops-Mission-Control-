@@ -2,8 +2,7 @@
  * useApi — fetch initial state from REST before WebSocket connects.
  */
 import { useState, useEffect } from 'react'
-
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
+import { getApiUrl } from './config.js'
 
 export function useApi() {
   const [initialServices, setInitialServices] = useState([])
@@ -15,10 +14,11 @@ export function useApi() {
     let cancelled = false
 
     async function fetchInitial() {
+      const apiUrl = getApiUrl()
       try {
         const [svcRes, histRes] = await Promise.all([
-          fetch(`${API_URL}/api/services`),
-          fetch(`${API_URL}/api/history?limit=80`),
+          fetch(`${apiUrl}/api/services`),
+          fetch(`${apiUrl}/api/history?limit=80`),
         ])
         if (!svcRes.ok || !histRes.ok) throw new Error('API error')
         const svcData = await svcRes.json()

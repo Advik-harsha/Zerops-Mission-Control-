@@ -4,8 +4,7 @@
  * Returns: { connected, lastMessage, connectionStatus }
  */
 import { useState, useEffect, useRef, useCallback } from 'react'
-
-const WS_URL = import.meta.env.VITE_WS_URL || 'ws://localhost:8000/ws'
+import { getWsUrl } from './config.js'
 
 const RECONNECT_DELAYS = [1000, 2000, 4000, 8000, 15000] // back-off
 
@@ -22,7 +21,8 @@ export function useWebSocket(onMessage) {
 
     setConnectionStatus(reconnectAttemptRef.current > 0 ? 'reconnecting' : 'connecting')
 
-    const ws = new WebSocket(WS_URL)
+    const wsUrl = getWsUrl()
+    const ws = new WebSocket(wsUrl)
     wsRef.current = ws
 
     ws.onopen = () => {
