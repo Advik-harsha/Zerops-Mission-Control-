@@ -1,6 +1,6 @@
-/**
- * Async HTTP client wrapping the Zerops REST API.
- */
+"""
+Async HTTP client wrapping the Zerops REST API.
+"""
 import logging
 import os
 from typing import Any
