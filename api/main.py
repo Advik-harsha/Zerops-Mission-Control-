@@ -101,21 +101,27 @@ async def _broadcast_fn(msg: StateUpdateMessage):
     await manager.broadcast(msg)
 
 
-# ---------------------------------------------------------------------------
-# Lifespan: create tables + start poller
-# ---------------------------------------------------------------------------
+async def _init_db_and_poller():
+    """Non-blocking startup: attempts DB table creation then starts poller."""
+    for attempt in range(1, 10):
+        try:
+            async with engine.begin() as conn:
+                await conn.run_sync(Base.metadata.create_all)
+            logger.info("Database tables ready.")
+            break
+        except Exception as exc:
+            logger.warning("DB init attempt %d failed: %s. Retrying in 3s...", attempt, exc)
+            await asyncio.sleep(3)
 
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    # Create tables if they don't exist (idempotent)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    logger.info("Database tables ready.")
-
-    # Start background poller
     global _poller_task
     _poller_task = asyncio.create_task(run_poller(_broadcast_fn))
     logger.info("Poller task started.")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Non-blocking: launch DB init + poller in background task so readiness probe passes instantly
+    asyncio.create_task(_init_db_and_poller())
 
     yield
 
