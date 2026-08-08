@@ -1,6 +1,7 @@
 /**
- * ControlRoom — master layout v2 (upgraded).
- * Full-viewport spacecraft control room with animated starfield background.
+ * ControlRoom — master layout v3 (high-density flight deck).
+ * Assembles starfield, telemetry gauges, orbital map, life-support panels,
+ * launch sequence, and mission log into a dense SpaceX control room.
  */
 import React, { useState, useEffect } from 'react'
 import OrbitalMap from './OrbitalMap.jsx'
@@ -9,6 +10,7 @@ import LaunchSequence from './LaunchSequence.jsx'
 import MissionLog from './MissionLog.jsx'
 import StarfieldCanvas from './StarfieldCanvas.jsx'
 import MissionClock from './MissionClock.jsx'
+import TelemetryPanel from './TelemetryPanel.jsx'
 
 export default function ControlRoom({
   services = [],
@@ -107,13 +109,11 @@ export default function ControlRoom({
 
           {/* Logo */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, flexShrink: 0 }}>
-            {/* Animated radar icon */}
             <div style={{ position: 'relative', width: 28, height: 28 }}>
               <svg width="28" height="28" viewBox="0 0 28 28" fill="none" style={{ position: 'absolute' }}>
                 <circle cx="14" cy="14" r="12" stroke="rgba(0,212,255,0.2)" strokeWidth="1" />
                 <circle cx="14" cy="14" r="7" stroke="rgba(0,212,255,0.15)" strokeWidth="0.5" strokeDasharray="2 3" style={{ animation: 'spin-slow 12s linear infinite', transformOrigin: '14px 14px' }} />
                 <circle cx="14" cy="14" r="2.5" fill="var(--cyan)" style={{ filter: 'drop-shadow(0 0 4px var(--cyan))' }} />
-                {/* Sweep arm */}
                 <line x1="14" y1="14" x2="14" y2="3" stroke="var(--cyan)" strokeWidth="1.5" strokeOpacity="0.8"
                   style={{ animation: 'spin-slow 3s linear infinite', transformOrigin: '14px 14px' }} />
               </svg>
@@ -145,7 +145,6 @@ export default function ControlRoom({
             </div>
           </div>
 
-          {/* Divider */}
           <div style={{ width: 1, height: 28, background: 'var(--border)', flexShrink: 0 }} />
 
           {/* System status badge */}
@@ -171,7 +170,7 @@ export default function ControlRoom({
               borderRadius: '50%',
               background: systemColor,
               boxShadow: `0 0 8px ${systemColor}`,
-              animation: totalNominal === services.length && services.length > 0
+              animation: safeServices.length > 0
                 ? 'blink 2.5s ease-in-out infinite'
                 : 'none',
             }} />
@@ -203,7 +202,6 @@ export default function ControlRoom({
             </span>
           </div>
 
-          {/* Divider */}
           <div style={{ width: 1, height: 24, background: 'var(--border)', flexShrink: 0 }} />
 
           {/* Connection */}
@@ -220,7 +218,6 @@ export default function ControlRoom({
             </span>
           </div>
 
-          {/* Divider */}
           <div style={{ width: 1, height: 24, background: 'var(--border)', flexShrink: 0 }} />
 
           {/* Mission clock */}
@@ -237,48 +234,41 @@ export default function ControlRoom({
           padding: '10px 10px 10px 14px',
           overflow: 'hidden',
         }}>
-          {/* Orbital map */}
+          {/* Central Column: Orbital map + Telemetry gauges */}
           <div style={{
-            position: 'relative',
-            borderRadius: 14,
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 8,
+            height: '100%',
             overflow: 'hidden',
-            border: '1px solid var(--border-bright)',
-            background: 'rgba(2,6,9,0.7)',
-            backdropFilter: 'blur(20px)',
-            boxShadow: '0 0 40px rgba(0,212,255,0.04), inset 0 0 60px rgba(0,0,0,0.4)',
           }}>
-            <OrbitalMap services={services} projectName={projectName} />
-            {/* Section label */}
+            {/* Orbital Map */}
             <div style={{
-              position: 'absolute',
-              top: 12, left: 14,
-              fontFamily: 'var(--font-mono)',
-              fontSize: 8,
-              color: 'rgba(0,212,255,0.4)',
-              letterSpacing: '0.2em',
-            }}>ORBITAL TOPOLOGY</div>
-            {/* Corner brackets */}
-            {[
-              { top: 6, left: 6, borderTop: true, borderLeft: true },
-              { top: 6, right: 6, borderTop: true, borderRight: true },
-              { bottom: 6, left: 6, borderBottom: true, borderLeft: true },
-              { bottom: 6, right: 6, borderBottom: true, borderRight: true },
-            ].map((b, i) => (
-              <div key={i} style={{
+              flex: 1,
+              position: 'relative',
+              borderRadius: 14,
+              overflow: 'hidden',
+              border: '1px solid var(--border-bright)',
+              background: 'rgba(2,6,9,0.7)',
+              backdropFilter: 'blur(20px)',
+              boxShadow: '0 0 40px rgba(0,212,255,0.04), inset 0 0 60px rgba(0,0,0,0.4)',
+            }}>
+              <OrbitalMap services={safeServices} projectName={projectName} />
+              <div style={{
                 position: 'absolute',
-                width: 12, height: 12,
-                ...b,
-                borderTopWidth: b.borderTop ? 1 : 0,
-                borderLeftWidth: b.borderLeft ? 1 : 0,
-                borderRightWidth: b.borderRight ? 1 : 0,
-                borderBottomWidth: b.borderBottom ? 1 : 0,
-                borderStyle: 'solid',
-                borderColor: 'rgba(0,212,255,0.3)',
-              }} />
-            ))}
+                top: 12, left: 14,
+                fontFamily: 'var(--font-mono)',
+                fontSize: 8,
+                color: 'rgba(0,212,255,0.4)',
+                letterSpacing: '0.2em',
+              }}>ORBITAL TOPOLOGY MAP</div>
+            </div>
+
+            {/* Live Telemetry Panel (CPU, RAM, Network, DB) */}
+            <TelemetryPanel serviceCount={safeServices.length} />
           </div>
 
-          {/* Service module stack */}
+          {/* Right Column: Service modules stack */}
           <div style={{
             display: 'flex',
             flexDirection: 'column',
@@ -311,7 +301,6 @@ export default function ControlRoom({
                 gap: 12,
                 color: 'var(--text-muted)',
               }}>
-                {/* Spinner */}
                 <div style={{
                   width: 28, height: 28,
                   border: '2px solid rgba(0,212,255,0.1)',
@@ -324,7 +313,7 @@ export default function ControlRoom({
                   fontSize: 10,
                   letterSpacing: '0.15em',
                   animation: 'blink 1.5s ease-in-out infinite',
-                }}>SCANNING…</span>
+                }}>SCANNING TELEMETRY…</span>
               </div>
             ) : (
               safeServices.map(svc => (

@@ -1,9 +1,9 @@
 /**
- * LaunchSequence — animated staged progress bar showing the active deploy pipeline.
- * Phases: BUILD → PREPARE_RUNTIME → DEPLOY → RUNNING
- * Styled as a spacecraft launch countdown sequence.
+ * LaunchSequence v2 — interactive spacecraft launch pipeline bar.
+ * Tracks live Zerops deploy pipelines AND includes an interactive
+ * simulation mode for hackathon judges to trigger on demand.
  */
-import React, { useMemo } from 'react'
+import React, { useMemo, useState, useEffect } from 'react'
 
 const PHASES = [
   { key: 'BUILD',           label: 'BUILD',   short: '01' },
@@ -17,94 +17,137 @@ function phaseIndex(phase = '') {
   return idx === -1 ? 0 : idx
 }
 
-function phaseColor(phaseStatus = '') {
-  const s = phaseStatus.toUpperCase()
-  if (s === 'DONE')    return 'var(--green)'
-  if (s === 'RUNNING') return 'var(--cyan)'
-  if (s === 'FAILED')  return 'var(--red)'
-  if (s === 'QUEUED')  return 'var(--amber)'
-  return 'var(--space-light)'
-}
-
 export default function LaunchSequence({ pipelineEvents = [] }) {
-  // Get the most recent event per service, then the one currently in progress
-  const activeEvent = useMemo(() => {
-    // Find the most recent RUNNING event, or fallback to most recent event
-    const running = pipelineEvents.find(e => e.phase_status === 'RUNNING')
+  const [simStep, setSimStep] = useState(null) // null | 0 | 1 | 2 | 3
+  const [simService, setSimService] = useState('api')
+
+  // Auto-advance simulated launch
+  useEffect(() => {
+    if (simStep === null) return
+    if (simStep >= 3) {
+      const t = setTimeout(() => setSimStep(null), 4000)
+      return () => clearTimeout(t)
+    }
+    const t = setTimeout(() => setSimStep(s => s + 1), 3000)
+    return () => clearTimeout(t)
+  }, [simStep])
+
+  const realActiveEvent = useMemo(() => {
+    const safe = Array.isArray(pipelineEvents) ? pipelineEvents : []
+    const running = safe.find(e => e && e.phase_status === 'RUNNING')
     if (running) return running
-    if (pipelineEvents.length > 0) return pipelineEvents[pipelineEvents.length - 1]
+    if (safe.length > 0) return safe[safe.length - 1]
     return null
   }, [pipelineEvents])
 
-  if (!activeEvent) {
-    return (
-      <div style={{ padding: '12px 16px' }}>
-        <SectionHeader />
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          height: 48,
-          color: 'var(--text-muted)',
-          fontFamily: 'var(--font-mono)',
-          fontSize: 11,
-          letterSpacing: '0.1em',
-        }}>
-          STANDING BY — NO ACTIVE PIPELINES
-        </div>
-      </div>
-    )
-  }
+  // Use simulated event if active, else real event
+  const isSimulating = simStep !== null
+  const activeEvent = isSimulating ? {
+    service_name: simService,
+    version_id: 'sim-v1.0.4',
+    phase: PHASES[simStep]?.key || 'RUNNING',
+    phase_status: simStep === 3 ? 'DONE' : 'RUNNING',
+  } : realActiveEvent
 
-  const currentPhaseIdx = phaseIndex(activeEvent.phase)
-  const activePhaseStatus = activeEvent.phase_status
+  const currentPhaseIdx = activeEvent ? phaseIndex(activeEvent.phase) : 3
+  const activePhaseStatus = activeEvent ? activeEvent.phase_status : 'STANDBY'
 
   return (
-    <div style={{ padding: '12px 16px' }}>
-      <SectionHeader serviceName={activeEvent.service_name} />
+    <div style={{ padding: '10px 14px', height: '100%', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <div style={{
+            width: 14, height: 14,
+            borderRadius: 3,
+            background: 'linear-gradient(135deg, var(--cyan), var(--purple))',
+            boxShadow: '0 0 8px var(--cyan)',
+            flexShrink: 0,
+          }} />
+          <span className="label" style={{ color: 'var(--text-primary)', fontWeight: 600 }}>
+            LAUNCH PIPELINE SEQUENCE
+          </span>
+          {activeEvent && (
+            <span style={{
+              fontFamily: 'var(--font-mono)',
+              fontSize: 10,
+              color: 'var(--cyan)',
+              letterSpacing: '0.08em',
+              fontWeight: 600,
+            }}>
+              [{activeEvent.service_name?.toUpperCase()}]
+            </span>
+          )}
+        </div>
 
-      {/* Phase track */}
-      <div style={{ display: 'flex', gap: 4, marginTop: 10, alignItems: 'stretch' }}>
+        {/* Interactive Simulate Button for Judges */}
+        <button
+          onClick={() => {
+            setSimService(prev => prev === 'api' ? 'gui' : 'api')
+            setSimStep(0)
+          }}
+          disabled={isSimulating}
+          style={{
+            padding: '3px 10px',
+            borderRadius: 4,
+            border: '1px solid var(--border-bright)',
+            background: isSimulating ? 'rgba(0,212,255,0.1)' : 'rgba(0,212,255,0.15)',
+            color: 'var(--cyan)',
+            fontFamily: 'var(--font-mono)',
+            fontSize: 9,
+            fontWeight: 600,
+            letterSpacing: '0.1em',
+            cursor: isSimulating ? 'not-allowed' : 'pointer',
+            transition: 'all 0.2s ease',
+            boxShadow: '0 0 10px rgba(0,212,255,0.1)',
+          }}
+        >
+          {isSimulating ? '🚀 LAUNCH IN PROGRESS…' : '▶ SIMULATE LAUNCH DEMO'}
+        </button>
+      </div>
+
+      {/* Phase Track */}
+      <div style={{ display: 'flex', gap: 6, alignItems: 'stretch' }}>
         {PHASES.map((ph, i) => {
           let state = 'pending'
-          if (i < currentPhaseIdx) state = 'done'
-          else if (i === currentPhaseIdx) state = activePhaseStatus.toLowerCase()
+          if (activeEvent) {
+            if (i < currentPhaseIdx) state = 'done'
+            else if (i === currentPhaseIdx) state = activePhaseStatus.toLowerCase()
+          } else {
+            state = 'done'
+          }
 
           const color = state === 'done'    ? 'var(--green)'
                       : state === 'running' ? 'var(--cyan)'
                       : state === 'failed'  ? 'var(--red)'
-                      : state === 'queued'  ? 'var(--amber)'
-                      : 'rgba(0,212,255,0.15)'
+                      : 'rgba(0,212,255,0.12)'
 
-          const isCurrent = i === currentPhaseIdx
+          const isCurrent = i === currentPhaseIdx && activeEvent
 
           return (
             <div key={ph.key} style={{ flex: 1, position: 'relative' }}>
-              {/* Phase block */}
               <div style={{
-                height: 36,
-                borderRadius: 4,
+                height: 34,
+                borderRadius: 6,
                 background: state === 'pending'
-                  ? 'rgba(0,0,0,0.3)'
-                  : `${color}18`,
+                  ? 'rgba(6,11,18,0.7)'
+                  : `${color}15`,
                 border: `1px solid ${isCurrent ? color : (state === 'done' ? 'rgba(0,255,136,0.3)' : 'rgba(0,212,255,0.1)')}`,
                 display: 'flex',
-                flexDirection: 'column',
                 alignItems: 'center',
                 justifyContent: 'center',
-                gap: 2,
+                gap: 8,
                 position: 'relative',
                 overflow: 'hidden',
                 transition: 'all 0.4s ease',
-                boxShadow: isCurrent ? `0 0 12px ${color}40` : 'none',
+                boxShadow: isCurrent ? `0 0 16px ${color}50` : 'none',
               }}>
-                {/* Running fill animation */}
+                {/* Running shimmer */}
                 {state === 'running' && (
                   <div style={{
                     position: 'absolute',
                     inset: 0,
-                    background: `linear-gradient(90deg, transparent, ${color}20, transparent)`,
-                    animation: 'pipeline-fill 1.5s ease-in-out infinite alternate',
+                    background: `linear-gradient(90deg, transparent, ${color}35, transparent)`,
+                    animation: 'pipeline-fill 1.2s ease-in-out infinite alternate',
                   }} />
                 )}
                 <span style={{
@@ -112,7 +155,7 @@ export default function LaunchSequence({ pipelineEvents = [] }) {
                   fontSize: 9,
                   color: state === 'pending' ? 'rgba(0,212,255,0.3)' : color,
                   letterSpacing: '0.1em',
-                  position: 'relative',
+                  fontWeight: 700,
                 }}>
                   {ph.short}
                 </span>
@@ -120,89 +163,37 @@ export default function LaunchSequence({ pipelineEvents = [] }) {
                   fontFamily: 'var(--font-mono)',
                   fontSize: 10,
                   fontWeight: 600,
-                  color: state === 'pending' ? 'rgba(0,212,255,0.25)' : color,
+                  color: state === 'pending' ? 'rgba(0,212,255,0.3)' : color,
                   letterSpacing: '0.08em',
-                  position: 'relative',
                 }}>
                   {ph.label}
                 </span>
               </div>
-
-              {/* Arrow connector */}
-              {i < PHASES.length - 1 && (
-                <div style={{
-                  position: 'absolute',
-                  right: -5, top: '50%',
-                  transform: 'translateY(-50%)',
-                  color: 'rgba(0,212,255,0.3)',
-                  fontSize: 10,
-                  zIndex: 1,
-                }}>▸</div>
-              )}
             </div>
           )
         })}
       </div>
 
-      {/* Status line */}
+      {/* Status Bar */}
       <div style={{
-        marginTop: 8,
+        marginTop: 5,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
       }}>
-        <span style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          color: 'var(--text-muted)',
-        }}>
-          VERSION: <span style={{ color: 'var(--cyan)' }}>
-            {activeEvent.version_id?.substring(0, 8)}…
-          </span>
+        <span style={{ fontFamily: 'var(--font-mono)', fontSize: 9, color: 'var(--text-muted)' }}>
+          VERSION: <span style={{ color: 'var(--cyan)' }}>{activeEvent?.version_id?.substring(0, 10) || 'v1.0.0'}</span>
         </span>
         <span style={{
           fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          color: phaseColor(activePhaseStatus),
+          fontSize: 9,
+          color: activeEvent ? (activePhaseStatus === 'DONE' ? 'var(--green)' : 'var(--cyan)') : 'var(--green)',
           letterSpacing: '0.1em',
+          fontWeight: 600,
         }}>
-          ◆ {activePhaseStatus}
+          ◆ {activeEvent ? activePhaseStatus.toUpperCase() : 'NOMINAL — STANDBY'}
         </span>
       </div>
-    </div>
-  )
-}
-
-function SectionHeader({ serviceName }) {
-  return (
-    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <span style={{
-          display: 'inline-block',
-          width: 16, height: 16,
-          borderRadius: 3,
-          background: 'linear-gradient(135deg, var(--cyan), var(--purple))',
-          flexShrink: 0,
-        }} />
-        <span style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          letterSpacing: '0.15em',
-          color: 'var(--text-muted)',
-        }}>
-          LAUNCH SEQUENCE
-        </span>
-      </div>
-      {serviceName && (
-        <span style={{
-          fontFamily: 'var(--font-mono)',
-          fontSize: 10,
-          color: 'var(--cyan)',
-          letterSpacing: '0.08em',
-        }}>
-          {serviceName.toUpperCase()}
-        </span>
-      )}
     </div>
   )
 }
