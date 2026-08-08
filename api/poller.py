@@ -301,11 +301,6 @@ async def poll_once(
 
         await session.commit()
 
-    if not state_changed and not new_pipeline_events:
-        # Nothing new — send a lightweight ping so the frontend knows
-        # the poller is alive (do this every cycle regardless)
-        pass
-
     update = StateUpdateMessage(
         type="state_update",
         timestamp=datetime.now(timezone.utc),
