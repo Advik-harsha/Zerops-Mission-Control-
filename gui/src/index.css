@@ -1,38 +1,41 @@
 /* ============================================================
-   Mission Control — Global Design System
-   Deep-space aesthetic: dark void + electric cyan accents
+   Mission Control — Global Design System v2
+   Deep-space aesthetic: dark void + electric cyan + nebula
    ============================================================ */
 
-/* --- Google Fonts are loaded in index.html --- */
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
 
 /* ---- Color tokens ---- */
 :root {
-  --void:          #040810;
-  --deep-space:    #080c14;
-  --space-dark:    #0d1424;
-  --space-mid:     #111d35;
-  --space-light:   #1a2d4f;
-  --border:        rgba(0, 212, 255, 0.15);
-  --border-bright: rgba(0, 212, 255, 0.4);
+  --void:          #020609;
+  --deep-space:    #060b12;
+  --space-dark:    #0a1220;
+  --space-mid:     #0f1c35;
+  --space-light:   #162840;
+  --border:        rgba(0, 212, 255, 0.12);
+  --border-bright: rgba(0, 212, 255, 0.35);
+  --border-glow:   rgba(0, 212, 255, 0.6);
 
   --cyan:          #00d4ff;
-  --cyan-dim:      rgba(0, 212, 255, 0.6);
+  --cyan-dim:      rgba(0, 212, 255, 0.5);
   --cyan-glow:     rgba(0, 212, 255, 0.15);
+  --cyan-deep:     rgba(0, 212, 255, 0.05);
   --green:         #00ff88;
-  --green-dim:     rgba(0, 255, 136, 0.6);
+  --green-dim:     rgba(0, 255, 136, 0.55);
   --green-glow:    rgba(0, 255, 136, 0.12);
   --amber:         #ffaa00;
-  --amber-dim:     rgba(255, 170, 0, 0.6);
+  --amber-dim:     rgba(255, 170, 0, 0.55);
   --amber-glow:    rgba(255, 170, 0, 0.12);
-  --red:           #ff3355;
-  --red-dim:       rgba(255, 51, 85, 0.6);
-  --red-glow:      rgba(255, 51, 85, 0.12);
-  --purple:        #7c3aed;
-  --purple-dim:    rgba(124, 58, 237, 0.5);
+  --red:           #ff2244;
+  --red-dim:       rgba(255, 34, 68, 0.55);
+  --red-glow:      rgba(255, 34, 68, 0.12);
+  --purple:        #8b5cf6;
+  --purple-dim:    rgba(139, 92, 246, 0.4);
+  --purple-glow:   rgba(139, 92, 246, 0.1);
 
-  --text-primary:   #e8f4ff;
-  --text-secondary: rgba(180, 210, 240, 0.7);
-  --text-muted:     rgba(140, 170, 200, 0.45);
+  --text-primary:   #eaf5ff;
+  --text-secondary: rgba(175, 210, 240, 0.65);
+  --text-muted:     rgba(120, 160, 195, 0.4);
   --text-data:      #00d4ff;
 
   --font-ui:   'Outfit', system-ui, sans-serif;
@@ -40,8 +43,8 @@
 
   --radius-sm:  4px;
   --radius-md:  8px;
-  --radius-lg:  12px;
-  --radius-xl:  20px;
+  --radius-lg:  14px;
+  --radius-xl:  22px;
 }
 
 /* ---- Reset ---- */
@@ -64,31 +67,23 @@ body {
   font-size: 14px;
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
-  /* Subtle starfield background */
-  background-image:
-    radial-gradient(1px 1px at 20% 30%, rgba(255,255,255,0.4) 0%, transparent 100%),
-    radial-gradient(1px 1px at 80% 10%, rgba(255,255,255,0.3) 0%, transparent 100%),
-    radial-gradient(1px 1px at 50% 80%, rgba(255,255,255,0.35) 0%, transparent 100%),
-    radial-gradient(1px 1px at 10% 70%, rgba(255,255,255,0.25) 0%, transparent 100%),
-    radial-gradient(1px 1px at 90% 60%, rgba(255,255,255,0.3) 0%, transparent 100%),
-    radial-gradient(2px 2px at 35% 15%, rgba(0,212,255,0.3) 0%, transparent 100%),
-    radial-gradient(2px 2px at 65% 90%, rgba(0,255,136,0.2) 0%, transparent 100%);
 }
 
 /* ---- Scrollbar ---- */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: var(--space-dark); }
-::-webkit-scrollbar-thumb { background: var(--border-bright); border-radius: 2px; }
+::-webkit-scrollbar { width: 3px; height: 3px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0, 212, 255, 0.3); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0, 212, 255, 0.6); }
 
-/* ---- Glassmorphism base ---- */
+/* ---- Glassmorphism ---- */
 .glass {
   background: linear-gradient(
     135deg,
-    rgba(13, 20, 36, 0.85) 0%,
-    rgba(17, 29, 53, 0.75) 100%
+    rgba(10, 18, 32, 0.88) 0%,
+    rgba(15, 28, 53, 0.78) 100%
   );
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   border: 1px solid var(--border);
   border-radius: var(--radius-lg);
 }
@@ -96,103 +91,155 @@ body {
 .glass-bright {
   background: linear-gradient(
     135deg,
-    rgba(13, 20, 36, 0.9) 0%,
-    rgba(17, 29, 53, 0.85) 100%
+    rgba(10, 18, 32, 0.92) 0%,
+    rgba(15, 28, 53, 0.86) 50%,
+    rgba(10, 18, 32, 0.92) 100%
   );
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--border-bright);
   border-radius: var(--radius-lg);
-  box-shadow: 0 0 24px rgba(0, 212, 255, 0.06), inset 0 1px 0 rgba(0, 212, 255, 0.1);
+  box-shadow:
+    0 0 30px rgba(0, 212, 255, 0.04),
+    0 0 60px rgba(0, 212, 255, 0.02),
+    inset 0 1px 0 rgba(0, 212, 255, 0.08),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.3);
 }
-
-/* ---- Glow utility ---- */
-.glow-cyan  { text-shadow: 0 0 8px var(--cyan),  0 0 24px var(--cyan-glow);  }
-.glow-green { text-shadow: 0 0 8px var(--green), 0 0 24px var(--green-glow); }
-.glow-amber { text-shadow: 0 0 8px var(--amber), 0 0 24px var(--amber-glow); }
-.glow-red   { text-shadow: 0 0 8px var(--red),   0 0 24px var(--red-glow);   }
 
 /* ---- Animations ---- */
 @keyframes pulse-ring {
-  0%   { transform: scale(0.95); opacity: 1; }
-  70%  { transform: scale(1.15); opacity: 0; }
-  100% { transform: scale(0.95); opacity: 0; }
-}
-
-@keyframes scan-line {
-  0%   { transform: translateY(-100%); }
-  100% { transform: translateY(100vh); }
+  0%   { transform: scale(0.9); opacity: 1; }
+  70%  { transform: scale(1.2); opacity: 0; }
+  100% { transform: scale(0.9); opacity: 0; }
 }
 
 @keyframes blink {
   0%, 100% { opacity: 1; }
-  50%       { opacity: 0.3; }
+  50%       { opacity: 0.2; }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0px);  }
-  50%       { transform: translateY(-4px); }
-}
-
-@keyframes orbit-particle {
-  0%   { stroke-dashoffset: 0; }
-  100% { stroke-dashoffset: -500; }
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-5px); }
 }
 
 @keyframes slide-in-right {
-  from { transform: translateX(20px); opacity: 0; }
+  from { transform: translateX(24px); opacity: 0; }
   to   { transform: translateX(0);    opacity: 1; }
 }
 
 @keyframes fade-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes pipeline-fill {
-  from { width: 0%; }
-  to   { width: 100%; }
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(200%); }
 }
+
+@keyframes spin-slow {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+@keyframes spin-reverse {
+  from { transform: rotate(360deg); }
+  to   { transform: rotate(0deg); }
+}
+
+@keyframes nebula-pulse {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50%       { opacity: 0.7; transform: scale(1.05); }
+}
+
+@keyframes data-stream {
+  0%   { stroke-dashoffset: 0; opacity: 1; }
+  100% { stroke-dashoffset: -600; opacity: 0.3; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 8px currentColor; }
+  50%       { box-shadow: 0 0 20px currentColor, 0 0 40px currentColor; }
+}
+
+@keyframes header-scan {
+  0%   { left: -100%; }
+  100% { left: 200%; }
+}
+
+/* ---- Glow utilities ---- */
+.glow-cyan  { text-shadow: 0 0 10px var(--cyan),  0 0 30px var(--cyan-glow);  color: var(--cyan); }
+.glow-green { text-shadow: 0 0 10px var(--green), 0 0 30px var(--green-glow); color: var(--green); }
+.glow-amber { text-shadow: 0 0 10px var(--amber), 0 0 30px var(--amber-glow); color: var(--amber); }
+.glow-red   { text-shadow: 0 0 10px var(--red),   0 0 30px var(--red-glow);   color: var(--red); }
 
 /* ---- CRT scanline overlay ---- */
 .crt-overlay {
   pointer-events: none;
   position: fixed;
   inset: 0;
-  z-index: 999;
+  z-index: 9999;
   background: repeating-linear-gradient(
     0deg,
     transparent,
     transparent 2px,
-    rgba(0, 0, 0, 0.03) 2px,
-    rgba(0, 0, 0, 0.03) 4px
+    rgba(0, 0, 0, 0.025) 2px,
+    rgba(0, 0, 0, 0.025) 4px
   );
+  /* Vignette */
+  box-shadow: inset 0 0 120px rgba(0,0,0,0.5);
 }
 
-/* ---- Data label ---- */
+/* ---- Typography ---- */
 .label {
   font-family: var(--font-mono);
-  font-size: 10px;
-  letter-spacing: 0.12em;
+  font-size: 9px;
+  letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--text-muted);
 }
 
-/* ---- Mono value ---- */
 .mono-val {
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--text-data);
+  font-weight: 500;
 }
 
 /* ---- Connection status dot ---- */
 .conn-dot {
   display: inline-block;
-  width: 6px;
-  height: 6px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   flex-shrink: 0;
 }
-.conn-dot.live    { background: var(--green); box-shadow: 0 0 8px var(--green); animation: blink 2s ease-in-out infinite; }
-.conn-dot.polling { background: var(--amber); box-shadow: 0 0 8px var(--amber); }
-.conn-dot.offline { background: var(--red);   box-shadow: 0 0 8px var(--red);   }
+.conn-dot.live {
+  background: var(--green);
+  box-shadow: 0 0 0 2px rgba(0,255,136,0.2), 0 0 12px var(--green);
+  animation: blink 2.5s ease-in-out infinite;
+}
+.conn-dot.reconnecting {
+  background: var(--amber);
+  box-shadow: 0 0 0 2px rgba(255,170,0,0.2), 0 0 12px var(--amber);
+  animation: blink 0.8s ease-in-out infinite;
+}
+.conn-dot.offline {
+  background: var(--red);
+  box-shadow: 0 0 0 2px rgba(255,34,68,0.2), 0 0 12px var(--red);
+}
+
+/* ---- Starfield canvas ---- */
+#starfield {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+}
+
+/* ---- Ensure content is above starfield ---- */
+#root > * {
+  position: relative;
+  z-index: 1;
+}

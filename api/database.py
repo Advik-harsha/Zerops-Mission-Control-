@@ -7,14 +7,27 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy.orm import DeclarativeBase
 
 # Zerops injects DATABASE_URL as postgresql://user:pass@db:5432/dbname
-# We must swap the scheme to postgresql+asyncpg:// for asyncpg driver
+# We must swap the scheme to postgresql+asyncpg:// for asyncpg driver.
+# Zerops also injects individual vars: db_user, db_password, db_hostname, db_port
+# We build from individual vars as a reliable fallback.
 _raw_url = os.environ.get("DATABASE_URL", "")
+
+if not _raw_url or "${" in _raw_url:
+    # Construct from individual Zerops-injected vars
+    db_user     = os.environ.get("db_user", "")
+    db_password = os.environ.get("db_password", "")
+    db_port     = os.environ.get("db_port", "5432")
+    db_hostname = os.environ.get("db_hostname", "db")
+    if db_user and db_password:
+        _raw_url = f"postgresql://{db_user}:{db_password}@db:{db_port}/{db_hostname}"
+
 if _raw_url.startswith("postgresql://"):
     DATABASE_URL = _raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 elif _raw_url.startswith("postgres://"):
     DATABASE_URL = _raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
 else:
     DATABASE_URL = _raw_url
+
 
 engine = create_async_engine(
     DATABASE_URL,
