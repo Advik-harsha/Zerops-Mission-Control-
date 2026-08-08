@@ -33,7 +33,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 POLL_INTERVAL = int(os.environ.get("POLL_INTERVAL_SECONDS", "15"))
-ZEROPS_API_TOKEN = os.environ.get("ZEROPS_API_TOKEN", "")
+ZEROPS_API_TOKEN = os.environ.get("API_TOKEN", "") or os.environ.get("ZEROPS_API_TOKEN", "")
 TARGET_PROJECT_ID = os.environ.get("TARGET_PROJECT_ID", "")
 
 # In-memory cache of last-known service statuses for diffing
