@@ -6,9 +6,9 @@ zerops:
     build:
       base: python@3.11
       buildCommands:
-        - pip install -r requirements.txt
+        - cd api && pip install -r requirements.txt
       deployFiles:
-        - ./
+        - ./api
     run:
       base: python@3.11
       ports:
@@ -26,16 +26,13 @@ zerops:
 
   # ────────────────────────────────────────────────────
   # GUI — React + Vite static site
-  # Built by Node 22, served by Zerops static runtime
-  # VITE_* vars are injected at build time from envVariables
   # ────────────────────────────────────────────────────
   - setup: gui
     build:
       base: nodejs@22
       buildCommands:
-        - npm ci
-        - npm run build
+        - cd gui && npm ci && npm run build
       deployFiles:
-        - ./dist
+        - ./gui/dist
     run:
       base: static@1
