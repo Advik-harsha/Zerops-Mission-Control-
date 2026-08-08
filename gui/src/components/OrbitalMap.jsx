@@ -181,7 +181,7 @@ export default function OrbitalMap({ services = [], projectName = 'mission-contr
           fontFamily="'JetBrains Mono', monospace"
           fontSize="9" fill="var(--green)" letterSpacing="0.1em"
           style={{ textShadow: '0 0 8px var(--green)' }}>
-          {totalNominal}/{totalServices} NOMINAL
+          {totalActive}/{totalServices} NOMINAL
         </text>
 
         {/* Service Nodes */}
