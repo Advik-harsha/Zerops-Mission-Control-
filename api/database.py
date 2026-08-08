@@ -7,9 +7,6 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 from sqlalchemy.orm import DeclarativeBase
 
 # Zerops injects DATABASE_URL as postgresql://user:pass@db:5432/dbname
-# We must swap the scheme to postgresql+asyncpg:// for asyncpg driver.
-# Zerops also injects individual vars: db_user, db_password, db_hostname, db_port
-# We build from individual vars as a reliable fallback.
 _raw_url = os.environ.get("DATABASE_URL", "")
 
 if not _raw_url or "${" in _raw_url:
@@ -25,17 +22,22 @@ if _raw_url.startswith("postgresql://"):
     DATABASE_URL = _raw_url.replace("postgresql://", "postgresql+asyncpg://", 1)
 elif _raw_url.startswith("postgres://"):
     DATABASE_URL = _raw_url.replace("postgres://", "postgresql+asyncpg://", 1)
-else:
+elif _raw_url.startswith("postgresql+asyncpg://"):
     DATABASE_URL = _raw_url
+else:
+    # Fallback to local SQLite if PostgreSQL env vars are missing or invalid
+    DATABASE_URL = "sqlite+aiosqlite:///./mission_control.db"
 
-
-engine = create_async_engine(
-    DATABASE_URL,
-    echo=False,
-    pool_pre_ping=True,
-    pool_size=5,
-    max_overflow=10,
-)
+if "sqlite" in DATABASE_URL:
+    engine = create_async_engine(DATABASE_URL, echo=False)
+else:
+    engine = create_async_engine(
+        DATABASE_URL,
+        echo=False,
+        pool_pre_ping=True,
+        pool_size=5,
+        max_overflow=10,
+    )
 
 AsyncSessionLocal = async_sessionmaker(
     bind=engine,
