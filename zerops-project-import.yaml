@@ -1,0 +1,46 @@
+project:
+  name: mission-control
+  # Adjust region/location to match your Zerops account's datacenter.
+  # The API endpoint (api.app-prg1.zerops.io) is the same globally.
+
+services:
+  # ── PostgreSQL 14 — persistent state store ──────────
+  - hostname: db
+    type: postgresql@14
+    mode: NON_HA
+    # Zerops injects db_user, db_password, db_hostname env vars
+    # automatically — no extra config needed here.
+
+  # ── Python FastAPI — polling engine + WebSocket hub ──
+  - hostname: api
+    type: python@3.11
+    buildFromGit: https://github.com/Advik-harsha/Zerops-Mission-Control-
+    # IMPORTANT: After import, set these two secrets in the Zerops GUI:
+    #   - ZEROPS_API_TOKEN  (your Personal Access Token from zerops.io)
+    #   - TARGET_PROJECT_ID (the project ID shown in the Zerops GUI URL for mission-control)
+    envSecrets:
+      ZEROPS_API_TOKEN: PLACEHOLDER_SET_IN_GUI
+      TARGET_PROJECT_ID: PLACEHOLDER_SET_IN_GUI
+    envVariables:
+      # Private-network DB connection — uses Zerops injected vars
+      DATABASE_URL: postgresql://${db_user}:${db_password}@db:5432/${db_hostname}
+      POLL_INTERVAL_SECONDS: "15"
+      # Restrict CORS to the gui subdomain
+      ALLOWED_ORIGINS: https://${gui_zeropsSubdomain}
+      ZEROPS_API_BASE: https://api.app-prg1.zerops.io/api/rest/public
+    minContainers: 1
+    verticalAutoscaling:
+      minCpu: 1
+      maxCpu: 2
+      minRam: 0.5
+      maxRam: 2
+
+  # ── Static frontend — React/Vite built by Node 22 ───
+  - hostname: gui
+    type: static@1
+    buildFromGit: https://github.com/Advik-harsha/Zerops-Mission-Control-
+    envVariables:
+      # These are VITE_ prefixed so Vite bakes them in at build time.
+      # Zerops replaces ${api_zeropsSubdomain} with the actual api subdomain.
+      VITE_API_URL: https://${api_zeropsSubdomain}
+      VITE_WS_URL: wss://${api_zeropsSubdomain}/ws

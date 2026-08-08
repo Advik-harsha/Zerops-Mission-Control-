@@ -1,0 +1,41 @@
+zerops:
+  # ────────────────────────────────────────────────────
+  # API — Python 3.11 FastAPI service
+  # ────────────────────────────────────────────────────
+  - setup: api
+    build:
+      base: python@3.11
+      buildCommands:
+        - pip install -r requirements.txt
+      deployFiles:
+        - ./
+    run:
+      base: python@3.11
+      ports:
+        - port: 8000
+          httpSupport: true
+      start: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
+      readinessCheck:
+        httpGet:
+          port: 8000
+          path: /health
+          scheme: http
+        initialDelaySeconds: 5
+        periodSeconds: 10
+        failureThreshold: 6
+
+  # ────────────────────────────────────────────────────
+  # GUI — React + Vite static site
+  # Built by Node 22, served by Zerops static runtime
+  # VITE_* vars are injected at build time from envVariables
+  # ────────────────────────────────────────────────────
+  - setup: gui
+    build:
+      base: nodejs@22
+      buildCommands:
+        - npm ci
+        - npm run build
+      deployFiles:
+        - ./dist
+    run:
+      base: static@1
