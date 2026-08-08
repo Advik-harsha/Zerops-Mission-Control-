@@ -15,7 +15,7 @@ zerops:
         - port: 8000
           httpSupport: true
       prepareCommands:
-        - pip install -r requirements.txt
+        - pip install --break-system-packages --ignore-installed -r /home/zerops/requirements.txt || pip install --break-system-packages --ignore-installed -r requirements.txt
       start: uvicorn main:app --host 0.0.0.0 --port 8000 --workers 1
       readinessCheck:
         httpGet:
