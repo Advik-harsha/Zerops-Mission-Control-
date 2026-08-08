@@ -137,6 +137,8 @@ export default function App() {
   }, [])
 
   const { connectionStatus } = useWebSocket(handleMessage)
+  const isLive = connectionStatus === 'live' || (Array.isArray(services) && services.length > 0)
+  const effectiveStatus = isLive ? 'live' : connectionStatus
 
   return (
     <ErrorBoundary>
@@ -145,7 +147,7 @@ export default function App() {
         pipelineEvents={pipelineEvents}
         logEntries={logEntries.length > 0 ? logEntries : DEFAULT_LOGS}
         projectName={projectName}
-        connectionStatus={connectionStatus}
+        connectionStatus={effectiveStatus}
         lastUpdated={lastUpdated}
       />
     </ErrorBoundary>
